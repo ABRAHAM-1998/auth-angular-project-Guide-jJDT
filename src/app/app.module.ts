@@ -8,22 +8,23 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { getStorage, provideStorage } from '@angular/fire/storage';
+import { LoginComponent } from './COMPONENTS/login/login.component';
+import { DashboardComponent } from './COMPONENTS/dashboard/dashboard.component';
+import { AuthService } from './SERVICES/auth.service';
+import { AuthGuard } from './SERVICES/auth.guard';
+import { FIREBASE_OPTIONS } from '@angular/fire/compat';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    LoginComponent,
+    DashboardComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule
   ],
-  providers: [
-    provideAnimationsAsync(),
-    provideFirebaseApp(() => initializeApp({"projectId":"sevenzeronine-test","appId":"1:808404753539:web:9cac146464a0bd0ba04fb6","storageBucket":"sevenzeronine-test.appspot.com","apiKey":"AIzaSyCjaMQ5hbLm9J6FtecKM6j7T156OSR5PMk","authDomain":"sevenzeronine-test.firebaseapp.com","messagingSenderId":"808404753539","measurementId":"G-84GSC7J0PS"})),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage())
-  ],
+  
   bootstrap: [AppComponent]
 })
 export class AppModule { }
