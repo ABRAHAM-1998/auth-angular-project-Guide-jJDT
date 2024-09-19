@@ -1,46 +1,45 @@
-import { Injectable } from "@angular/core";
-import {
-  CanActivate,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-  UrlTree,
-  Router,
-} from "@angular/router";
-import { Observable } from "rxjs";
-import { AngularFireAuth } from "@angular/fire/compat/auth";
-import { AuthService } from "./auth.service";
+import { Injectable } from '@angular/core';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
-  constructor(
-    private auth: AuthService,
-    private router: Router,
-    private afAuth: AngularFireAuth,
-  ) { }
+
+  private readonly userDataKey = 'encryptedUserData';
+
+  constructor(private afAuth: AngularFireAuth, private router: Router) { }
 
   canActivate(
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ):
-    | Observable<boolean | UrlTree>
-    | Promise<boolean | UrlTree>
-    | boolean
-    | UrlTree {
-    return this.checkLogin(state.url);
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    return this.checkUserAuthentication();
   }
-  checkLogin(url: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      this.afAuth.authState.subscribe((user) => {
-        if (user && this.auth.isLoggedIn) {
-          resolve(true); 
-        } else {
-          this.auth.SignOut();
-          this.router.navigate(["/login"]);
-          resolve(false); 
-        }
-      });
-    });
+
+  private checkUserAuthentication(): Observable<boolean> {
+    const storedUser = localStorage.getItem(this.userDataKey);
+    if (storedUser) {
+      return this.afAuth.authState.pipe(
+        map(user => {
+          if (user) {
+            return true;
+          } else {
+            this.router.navigate(['/login']);
+            return false;
+          }
+        }),
+        catchError(() => {
+          this.router.navigate(['/login']);
+          return of(false);
+        })
+      );
+    } else {
+      this.router.navigate(['/login']);
+      return of(false);
+    }
   }
 }

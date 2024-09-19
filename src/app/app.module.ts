@@ -13,18 +13,37 @@ import { DashboardComponent } from './COMPONENTS/dashboard/dashboard.component';
 import { AuthService } from './SERVICES/auth.service';
 import { AuthGuard } from './SERVICES/auth.guard';
 import { FIREBASE_OPTIONS } from '@angular/fire/compat';
-
+import {TextFieldModule} from '@angular/cdk/text-field';
+import { FormsModule,ReactiveFormsModule } from '@angular/forms';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import { CommonModule } from '@angular/common';
+import { MatCommonModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import {MatSelectModule} from '@angular/material/select';
+import { RegisterComponent } from './COMPONENTS/register/register.component';
 @NgModule({
   declarations: [
     AppComponent,
-    LoginComponent,
-    DashboardComponent
+    DashboardComponent,
+    RegisterComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    CommonModule,
+    MatCommonModule,
+    TextFieldModule,
+    ReactiveFormsModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    MatSelectModule,
   ],
-  
+
   bootstrap: [AppComponent]
 })
 export class AppModule { }

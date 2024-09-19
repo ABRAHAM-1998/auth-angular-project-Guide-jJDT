@@ -1,100 +1,58 @@
 import { Injectable, NgZone } from "@angular/core";
 import { AngularFireAuth } from "@angular/fire/compat/auth";
-import {
-  AngularFirestore,
-  AngularFirestoreDocument,
-} from "@angular/fire/compat/firestore";
+import { AngularFirestore, } from "@angular/fire/compat/firestore";
 import { Router } from "@angular/router";
-import { Observable } from "rxjs";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { User } from "./model";
-interface Login {
-  uid: string;
-  email: string;
-  time: Date;
-  location: string;
-}
+
 @Injectable({
   providedIn: "root",
 })
 export class AuthService {
-  tests: Observable<any[]> | undefined;
+
   public Errormessage: any;
 
-  public userData: User = {
-    uid: "",
-    email: "",
-    displayName: "",
-    photoURL: "",
-    emailVerified: false,
-    location: "",
-    time: new Date(),
-  };
+  private readonly userDataKey = "encryptedUserData";
   constructor(
     private snackBar: MatSnackBar,
-    public afs: AngularFirestore, // Inject Firestore service
-    public afAuth: AngularFireAuth, // Inject Firebase auth service
+    public afs: AngularFirestore,
+    public afAuth: AngularFireAuth,
     public router: Router,
-    public ngZone: NgZone // NgZone service to remove outside scope warning
+    public ngZone: NgZone
   ) {
-    this.afAuth.authState.subscribe((user) => {
-      if (user) {
-        console.log("user is loggred in here");
-        this.userData.email = user.email!;
-        this.userData.displayName = user.email!;
-        this.userData.emailVerified = user.emailVerified;
-        this.userData.uid = user.uid;
 
-        localStorage.setItem("user", JSON.stringify(this.userData));
-        JSON.parse(localStorage.getItem("user")!);
-      } else {
-        localStorage.removeItem("user");
-        JSON.parse(localStorage.getItem("user")!);
-        this.SignOut;
-      }
-    });
   }
-  // Sign in with email/password
+  //============================coded by Abraham Jolly===================================
+  //============================Sign In USer=============================================
+
   async SignIn(email: string, password: string) {
     this.snackBar.open("Logging in .. Please wait..", "Close", {
       duration: 5000,
       panelClass: ["snackbar"],
     });
-    this.afAuth.setPersistence("session");
+
     return this.afAuth
       .signInWithEmailAndPassword(email, password)
       .then(async (result) => {
-        const login: Login = {
-          uid: result.user!.uid,
-          email: result.user!.email!,
-          time: new Date(),
-          location: "null",
-        };
-        this.SetUserData(result.user);
-        if (result.user?.emailVerified == true) {
-          const token = await result.user.getIdToken();
-          sessionStorage.setItem("token", token);
+        if (result.user) {
+          const userData = await this.getUserData(result.user?.uid);
+          return userData;
         } else {
-          this.snackBar.open(" FAILED..", "Close", {
+          this.snackBar.open("FAILED..", "Close", {
             duration: 4000,
             panelClass: ["snackbar"],
           });
+          return null; // if the no user
         }
-        this.afAuth.authState.subscribe((user) => {
-          if (user) {
-            this.router.navigate(["Home"]);
-            this.snackBar.open("Logging in .. Please wait..", "Close", {
-              duration: 3000,
-              panelClass: ["snackbar-success"],
-            });
-          }
-        });
       })
-
       .catch((error) => {
         this.showLoginError(error.code);
+        return null; // If Some error, no user!!!!
       });
   }
+  //============================coded by Abraham Jolly===================================
+  //============================Error Messages=============================================
+
   showLoginError(errorCode: string) {
     let message: string;
     switch (errorCode) {
@@ -122,7 +80,7 @@ export class AuthService {
       case "auth/user-not-found":
         message = "Invalid email address or password";
         break;
-      case "auth/wrong-password":
+      case "auth/invalid-credential":
         message = "Invalid email address or password";
         break;
       default:
@@ -135,7 +93,8 @@ export class AuthService {
     });
     this.Errormessage = message;
   }
-
+  //============================coded by Abraham Jolly===================================
+  //============================Email Verification=======================================
   // Send email verfificaiton when new user sign up
   SendVerificationMail() {
     return this.afAuth.currentUser
@@ -157,35 +116,25 @@ export class AuthService {
         console.log(error.message);
       });
   }
-  // Returns true when user is looged in and email is verified
-  get isLoggedIn(): boolean {
-    const user = JSON.parse(localStorage.getItem("user")!);
-    return user !== null && user.emailVerified == true
-      ? true
-      : false && this.afAuth.currentUser;
+  //============================coded by Abraham Jolly===================================
+  //============================Login Check =============================================
+  // Returns true when user is looged in
+  async isLoggedIn(): Promise<boolean> {
+    const encryptedUserData = localStorage.getItem("encryptedUserData");
+    if (encryptedUserData) {
+      const userEnc = atob(encryptedUserData!);
+      const userData: User = JSON.parse(userEnc!);
+      return userData !== null && await this.afAuth.currentUser
+        ? true
+        : false
+    } else {
+      return false
+    }
   }
 
-  async SetUserData(user: any) {
-    const userRef: AngularFirestoreDocument<any> = this.afs.doc(
-      `ADMIN/${user.uid}`
-    );
-    const userData: User = {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      emailVerified: user.emailVerified,
-      location: "",
-      time: new Date(),
-    };
-    return userRef.set(userData, {
-      merge: true,
-    });
-  }
-
-  // Sign out
+  //============================coded by Abraham Jolly===================================
+  //============================Sign Out USer=============================================
   SignOut() {
-    sessionStorage.removeItem("token");
     return this.afAuth
       .signOut()
       .then((result) => {
@@ -195,8 +144,7 @@ export class AuthService {
           panelClass: ["snackbar"],
         });
         // window.location.reload();
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        localStorage.removeItem("encryptedUserData");
       })
       .catch((error) => {
         this.snackBar.open(" You have been successfully logged out.", "Close", {
@@ -205,5 +153,31 @@ export class AuthService {
         });
       });
   }
+  //============================coded by Abraham Jolly===================================
+  //============================Get User Data =============================================
+
+  async getUserData(uid: string | undefined): Promise<User | null> {
+    if (!uid) {
+      return null;
+    }
+
+    try {
+      const userDoc = await this.afs.collection('users').doc<User>(uid).get().toPromise();
+      if (userDoc?.exists) {
+        return userDoc.data() as User;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      this.snackBar.open('Failed to retrieve user data', 'Close', {
+        duration: 4000,
+        panelClass: ['snackbar'],
+      });
+      return null;
+    }
+  }
+  //============================coded by Abraham Jolly===================================
+  //============================End of the code =============================================
+
 
 }

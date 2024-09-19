@@ -1,0 +1,16 @@
+.registration-form {
+    max-width: 450px;
+    margin: 100px auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  button {
+    width: 100%;
+  }
+  
